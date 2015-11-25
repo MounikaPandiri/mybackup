@@ -1,0 +1,2 @@
+python symphony.py --config-file /home/avalanche/testFramework/config_sipp --test-script /home/avalanche/testFramework/testScript.py
+#sudo python symphony.py --config-file config.ini --test-script testScript.py

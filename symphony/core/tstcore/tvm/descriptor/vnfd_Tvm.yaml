@@ -1,0 +1,129 @@
+vnfd:
+  id: Tvm
+  vendor: ETSI
+  description: 'Tvm service'
+  version: 1.0
+  connection-point:
+    comms-network:
+      name: comms-network
+    test-network:
+      name: test-network
+    mgmt-if:
+      name: mgmt-if
+    mgmt-fixed:
+      name: mgmt-fixed
+      fixed-ip: '192.168.0.5'
+    comms-fixed:
+      name: comms-fixed
+      fixed-ip: '192.168.99.3'
+  flavours:
+    Voip:
+      description: 'Voip services'
+      flavour-id: Silver
+      vdus:
+        vLS:
+          vdu-id: vLS
+          num-instances: 1
+          lifecycle-events:
+            init:
+          vm-spec:
+            container_format: bare
+            disk_format: qcow2
+            image:
+            image-id: e722aee6-4014-45ed-a7cc-3e4b862e8065
+            is_public: true
+            min_disk: 20
+            min_ram: 2048
+            name: vLS
+            password: tcs
+            username: tcs
+          storage: 20
+          memory:
+            total-memory-mb: 2048
+          cpu:
+            num-vcpu: 1
+          network-interfaces:
+            management-interface:
+              connection-point-ref: connection-points/mgmt-fixed
+        vTVMC:
+          vdu-id: vTVMc
+          num-instances: 1
+          lifecycle-events:
+            init:
+          vm-spec:
+            container_format: bare
+            disk_format: qcow2
+            image:
+            image-id: 5babe185-6c6d-40cb-a024-516f8b4aa40a
+            is_public: true
+            min_disk: 2048
+            min_ram: 2048 
+            name: vTVMC
+            password: diversifEye
+            username: cli
+          storage: 80
+          memory:
+            total-memory-mb: 2048
+          cpu:
+            num-vcpu: 2
+          network-interfaces:
+            management-interface:
+              connection-point-ref: connection-points/mgmt-if
+            comms-network:
+              connection-point-ref: connection-points/comms-fixed
+        vTVMT1:
+          vdu-id: vTVMT1
+          num-instances: 1
+          implementation-artifact:
+            deployment_artifact: /home/tcs/templates/TeraVM/scripts/userdata_tvm.yaml
+          lifecycle-events:
+            init:
+          vm-spec:
+            container_format: bare
+            disk_format: qcow2
+            image:
+            image-id: aeae7b1d-22a4-41a0-bfeb-5014934012c9
+            is_public: true
+            min_disk: 2560
+            min_ram: 2560
+            name: vTVMT1
+            password:
+            username:
+          storage: 8
+          memory:
+            total-memory-mb: 2560
+          cpu:
+            num-vcpu: 1
+          network-interfaces:
+            comms-network:
+              connection-point-ref: connection-points/comms-network
+            test-network:
+              connection-point-ref: connection-points/test-network
+        vTVMT2:
+          vdu-id: vTVMT2
+          num-instances: 1
+          implementation-artifact:
+            deployment_artifact: /home/tcs/templates/TeraVM/scripts/userdata_tvm.yaml
+          lifecycle-events:
+            init:
+          vm-spec:
+            container_format: bare
+            disk_format: qcow2
+            image:
+            image-id: aeae7b1d-22a4-41a0-bfeb-5014934012c9
+            is_public: true
+            min_disk: 2560
+            min_ram: 2560
+            name: vTVMT2
+            password: tcs
+            username: tcs
+          storage: 8
+          memory:
+            total-memory-mb: 2560
+          cpu:
+            num-vcpu: 2
+          network-interfaces:
+            comms-network:
+              connection-point-ref: connection-points/comms-network
+            test-network:
+              connection-point-ref: connection-points/test-network

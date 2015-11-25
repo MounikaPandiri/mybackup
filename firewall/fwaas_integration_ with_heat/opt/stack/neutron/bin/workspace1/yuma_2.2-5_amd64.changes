@@ -1,0 +1,67 @@
+Format: 1.8
+Date: Mon, 29 Oct 2012 11:28:00 -0700
+Source: yuma
+Binary: yuma yuma-dev yuma-doc
+Architecture: source amd64 all
+Version: 2.2-5
+Distribution: stable
+Urgency: high
+Maintainer: Andy Bierman <andy@yumaworks.com>
+Changed-By: Andy Bierman <andy@yumaworks.com>
+Description: 
+ yuma       - YANG-based Unified Modular Automation tools
+ yuma-dev   - YANG-based Unified Modular Automation tools (dev)
+ yuma-doc   - YANG-based Unified Modular Automation tools (doc)
+Changes: 
+ yuma (2.2-5) stable; urgency=high
+ .
+   * netconfd:
+     - fix error-path bugs
+       - extra  'input' node removed from error-path
+       - suppress error-path for RPC access-denied
+     - yuma-proc.yang: add 2 missing leafs to yuma-proc that have
+       been added recently to /proc/cpuinfo
+     - fix sourceforge bug 3572696 Double free memory issue related
+       to subtree filtering and virtual nodes
+     - change server so by default it does not allow port 22 on MACOSX
+ .
+   * yangcli:
+      - fix SSH key bug reported on yuma-developers list
+        The filenames were not expanded with ncx_get_source
+ .
+   * CLI parse:
+      - fix error message in raw CLI handler code
+      - fix bug where cli_parse_raw can write past the end of
+        the malloced buffer
+ .
+   * yangdump:
+      - fix bug in code generation for union;
+        parameter should be string, not val_value_t
+      - fix bug with --identifiers parameter where container
+        with no children caused output to terminate
+      - put correct ietf-netconf-notifications module in ietf module dir
+      - converge yuma-app-common with yumapro version
+ .
+   * YANG modules:
+     - update 3 IETF modules
+     - fix test.yang so the default NP containers do not cause errors
+     - refactor yuma-app-common to support --no-config in YumaPro
+     - update metconfcentral YANG modules so they align with Yuma
+Checksums-Sha1: 
+ dcb37d89f0720ce3ef5c8255f773b77084a5dfff 588 yuma_2.2-5.dsc
+ 196ac3bc4eeb0065c9c7e893255d150eba7d46a6 24078019 yuma_2.2-5.tar.gz
+ ce161a47c59b89c5bf58543ce550e6a80c767889 1189764 yuma_2.2-5_amd64.deb
+ eb95c9b323791011d5ebc26041fa49486347a3f0 13744 yuma-dev_2.2-5_all.deb
+ 284897251305ff7892b62b26b829ece6540c1e93 13702 yuma-doc_2.2-5_all.deb
+Checksums-Sha256: 
+ d4362d8ede645060f857f657387c333766f4be42f3be951adee8ad155166ea48 588 yuma_2.2-5.dsc
+ f5dac8a9148354fe08c6448dac8971083063371e6e1ab2b9548f63356c52feeb 24078019 yuma_2.2-5.tar.gz
+ 9366213ea5d554780166eaa6a06ad61755a3e6787dc0f41f6aa0b68f721b378a 1189764 yuma_2.2-5_amd64.deb
+ 105bb3277c89a992096b6faca8c6e5b2f8b42fc49983e7cb3e645410b384f0b3 13744 yuma-dev_2.2-5_all.deb
+ f1ef8f7c70342cf0aac9ab885bc1d3c66f3ed54507ef8bcbd791d905eb58b2c1 13702 yuma-doc_2.2-5_all.deb
+Files: 
+ 5b8cbf66477a735706f86eb067a7ddb7 588 devel extra yuma_2.2-5.dsc
+ 7b458871158a7ef571bf5f3c2419899f 24078019 devel extra yuma_2.2-5.tar.gz
+ fc927827536f1d7ca3968545ce3262ff 1189764 devel extra yuma_2.2-5_amd64.deb
+ db90c649ab57559ff1172b68c19a228a 13744 devel extra yuma-dev_2.2-5_all.deb
+ efbd147af6c505e2fd03633ebbe1494d 13702 doc extra yuma-doc_2.2-5_all.deb

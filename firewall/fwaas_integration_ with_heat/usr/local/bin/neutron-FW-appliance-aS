@@ -1,0 +1,9 @@
+#!/usr/bin/python
+# PBR Generated from u'console_scripts'
+
+import sys
+
+from neutron.services.firewall.agents.fw_netconf.netconf_fw_agent import main
+
+if __name__ == "__main__":
+    sys.exit(main())

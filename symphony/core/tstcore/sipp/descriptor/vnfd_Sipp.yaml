@@ -1,0 +1,41 @@
+vnfd:
+  id: Sipp
+  vendor: ETSI
+  description: 'Sipp service'
+  version: 1.0
+  connection-point:
+    sip-network:
+      name: sip-network
+    mgmt-if:
+      name: mgmt-if
+  flavours:
+    Voip:
+      description: 'Sipp services'
+      flavour-id: Silver
+      vdus:
+        vSipp:
+          vdu-id: vSipp
+          num-instances: 2
+          lifecycle-events:
+            init:
+          vm-spec:
+            container_format: bare
+            disk_format: qcow2
+            image:
+            image-id: 04eb5ce3-0810-4f31-8177-dbd9ed0e1dd8
+            is_public: true
+            min_disk: 1024
+            min_ram: 1024
+            name: vSipp
+            password: tyui
+            username: tcs
+          storage: 8
+          memory:
+            total-memory-mb: 1024
+          cpu:
+            num-vcpu: 1
+          network-interfaces:
+            management-interface:
+              connection-point-ref: connection-points/mgmt-if
+            sip-network:
+              connection-point-ref: connection-points/sip-network

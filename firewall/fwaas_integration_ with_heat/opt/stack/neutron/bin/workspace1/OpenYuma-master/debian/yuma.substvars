@@ -1,0 +1,2 @@
+shlibs:Depends=libc6 (>= 2.15), libssh2-1 (>= 1.1), libtinfo5, libxml2 (>= 2.7.4), yuma
+misc:Depends=

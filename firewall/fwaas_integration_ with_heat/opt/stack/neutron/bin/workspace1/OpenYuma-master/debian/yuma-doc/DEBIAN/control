@@ -1,0 +1,13 @@
+Package: yuma-doc
+Source: yuma
+Version: 2.2-5
+Architecture: all
+Maintainer: Andy Bierman <andy@yumaworks.com>
+Installed-Size: 38
+Section: doc
+Priority: extra
+Homepage: http://www.yumaworks.com/
+Description: YANG-based Unified Modular Automation tools (doc)
+ Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+ development toolkit.  This package contains the user and developer
+ manuals.

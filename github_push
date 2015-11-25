@@ -1,0 +1,35 @@
+git config --global user.name "Rounak Pramanik"
+git config --global user.email "rounak.pramanik@tcs.com"
+git init
+git add .
+git add ./*
+git commit -m "First Client Commit"
+git remote add origin https://github.com/TCS-OpenVNFManager/python-vnfsvcclient.git
+git push -u origin master 
+
+
+
+git config --global user.name "Mounika Pandhiri"
+git config --global user.email "mounika.pandhiri@tcs.com"
+git init
+git add .
+git add ./*
+git commit -m "First Heat code Commit"
+git remote add origin https://github.com/TCS-OpenVNFManager/heat.git
+git push -u origin master 
+
+
+git config --global user.name "Padmaja Dosapati"
+git config --global user.email "padmaja.dosapati@tcs.com"
+git init
+git add .
+git add ./*
+git commit -m "First Server Commit"
+git remote add origin https://github.com/TCS-OpenVNFManager/vnfsvc.git
+git push -u origin master 
+
+
+git remote set-url origin <new_url> <old_url>
+
+RounakPramanik-June#2014
+MounikaPandhiri-swetha@21

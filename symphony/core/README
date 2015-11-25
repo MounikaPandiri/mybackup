@@ -1,0 +1,92 @@
+# Copyright 2014 Tata Consultancy Services Ltd.
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+###############################################################################
+# Update History
+# 20AUG2015 - Akhila_Chetlapalle     : Initial Version
+###############################################################################
+
+How does Symphony Work :
+
+
+Symphony is installed on a virtual machine, that runs on KVM.
+
+A HEAT template is provided with a licensed Symphony setup. 
+This enables creation of the Symphony instance on Openstack
+
+Symphony VM has 2 network interfaces.
+Net-1 : Connected to the host network
+Net-2 : Connected to the test traffic networks
+
+Net-1 is for communication with the Openstack modules
+Net-2 is for the communication with traffic generator instances
+
+** 
+For a special case of physical host based traffic generators Net-1 would be used.
+**
+
+Typical usage of NFV Symphony is captured in the following steps:
+
+For clarity this is explained with the use-case of a virtual firewall verification :
+
+- User prepares a test script and configuration file for the virtual firewall.
+- Pre-requisites for this is 
+	- Virtual Instance details : Image/ISO/QCOW2, Topology, Test scenarios
+	- Traffic Generator : Configuration information, access credentials
+	- Openstack : Configuration [ single/multi node setup etc ]
+
+A sample test script is as follows :
+>>symphony run_test [ --script <path> --conf <path> | --bundle <path> ]
+
+import execore
+
+def run():
+    vFWSrvc = execore.onBoard(conf.CONF.TEST_CONFIG)
+    vFWSrvc.updateTemplate(nsd.vdu.image,conf.CONF.new_IMG)
+    vFW = execore.create(vFWSrvc)
+    # setup the traffic generator
+    trafficGen = execore.setTestGen(conf.CONF.TESTGEN_INFO)
+    #here on select the params to be configured on the traffic generator
+    #refer to the api document for specifics on the traffic generator configuration
+    #for example we are using a hypothetical traffic generator or NATMaster
+    #It only supports CLI based command execution
+    #For the current scenario, we want to validate the sourceNAT feature of the virtualFirewall
+    #we would have to use the following CLI Command
+    #set rule 'iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE'
+    #default connection to execute CLI Commands is ssh
+    #credentials can be picked up from the config file
+    #All network interfaces of a traffic generator are connected to the router by default
+    #** 
+    # trafficGen.setCredentials(conf.CONF.testCred_userID,conf.CONF.testCred_passwd)
+    #**
+    #Any other traffic generator specific configuration should be provided here.
+    #We have successfully configured the traffic generator
+    #for traffic testing enable diagnostic mode
+    execore.start_diagnostics()
+    trafficGen.setPKTData(TCP_IN_SRC,TCP_IN_DEST,TCP_OUT_SRC,TCP_OUT_DEST)
+    #All the above passed parameters will be read from the TESTGEN_INFO section of the test configuration file
+    trafficGen.sendTCP(vFW.external_network)
+    
+    
+
+We will have 3 sections in this tool
+
+1.) User Modules
+2.) Config Modules
+3.) System Modules
+
+Details of each of these modules is as follows:
+
+1.) User module
+This is the path which holds the following

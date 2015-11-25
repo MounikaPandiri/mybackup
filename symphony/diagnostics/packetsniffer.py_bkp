@@ -1,0 +1,35 @@
+from scapy.all import *
+from multiprocessing import Process
+
+
+class packetsniffer(Process):
+
+      def __init__(self):
+          super(packetsniffer,self).__init__()
+          print 'Packet sniffer started'
+
+      def run(self):
+          sniff(iface="eth2", filter="tcp or udp", prn=self.http_header, store=0)
+
+      def http_header(self, packet):
+          http_packet=str(packet)
+          if http_packet.find('urvika'):
+              return self.GET_print(packet)
+          #f http_packet.find('HTTP'):
+          #   return self.GET_httpprint(packet)
+
+      def GET_print(self, packet1):
+          ret = "***************************************SIP PACKET****************************************************\n"
+          ret += "\n".join(packet1.sprintf("{Raw:%Raw.load%}\n").split(r"\r\n"))
+          ret += "*****************************************************************************************************\n"
+          return ret
+
+      def GET_httpprint(self, packet1):
+          ret = "***************************************HTTP PACKET****************************************************\n"
+          ret += "\n".join(packet1.sprintf("{Raw:%Raw.load%}\n").split(r"\r\n"))
+          ret += "*****************************************************************************************************\n"
+          return ret
+
+      def packetHandler(self, packet):
+          print packet.show()
+      

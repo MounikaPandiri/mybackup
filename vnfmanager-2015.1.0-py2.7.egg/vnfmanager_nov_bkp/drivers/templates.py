@@ -1,0 +1,242 @@
+homer_settings = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <privateip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{private_ip}</Ipaddress>
+        </privateip>
+        <publicip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{public_ip}</Ipaddress>
+        </publicip>
+        <chronos>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{chronos_ip}</Ipaddress>
+        </chronos>
+        <Homer>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{homer_ip}</Ipaddress>
+        </Homer>
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_name}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+homer_service = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_homer}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+homestead_settings = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <privateip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{private_ip}</Ipaddress>
+        </privateip>
+        <publicip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{public_ip}</Ipaddress>
+        </publicip>
+        <chronos>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{chronos_ip}</Ipaddress>
+        </chronos>
+        <Homestead>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{homestead_ip}</Ipaddress>
+        </Homestead>
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_name}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+homestead_service = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_homestead}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+homestead_prov_service = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_homestead_prov}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+
+ellis_settings = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <privateip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{private_ip}</Ipaddress>
+        </privateip>
+        <publicip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{public_ip}</Ipaddress>
+        </publicip>
+        <chronos>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{chronos_ip}</Ipaddress>
+        </chronos>
+        <Homer>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{homer_ip}</Ipaddress>
+        </Homer>
+        <Homestead>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{homestead_ip}</Ipaddress>
+        </Homestead>
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_name}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+sprout_settings = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <privateip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{private_ip}</Ipaddress>
+        </privateip>
+        <publicip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{public_ip}</Ipaddress>
+        </publicip>
+        <chronos>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{chronos_ip}</Ipaddress>
+        </chronos>
+        <ClusterSettings>
+          <Ipaddress
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{cluster_ip}</Ipaddress>
+        </ClusterSettings>
+        <Homer>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{homer_ip}</Ipaddress>
+        </Homer>
+        <Homestead>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{homestead_ip}</Ipaddress>
+        </Homestead>
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_name}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+bono_settings = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <privateip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{private_ip}</Ipaddress>
+        </privateip>
+        <publicip>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{public_ip}</Ipaddress>
+        </publicip>
+        <chronos>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{chronos_ip}</Ipaddress>
+        </chronos>
+        <Homer>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{homer_ip}</Ipaddress>
+        </Homer>
+        <Homestead>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{homestead_ip}</Ipaddress>
+        </Homestead>
+        <Sprout>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{sprout_ip}</Ipaddress>
+        </Sprout>
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_name}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+Configure_service = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <Configure>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{command}</name>
+        </Configure>
+      </ims>
+    </config>
+"""
+restund_service = """
+   <config>
+      <ims xmlns="http://netconfcentral.org/ns/ims">
+        <restund>
+          <Ipaddress 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{restund_ip}</Ipaddress>
+        </restund>
+        <Service>
+          <name 
+            xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"
+            nc:operation="replace">{service_name}</name>
+        </Service>
+      </ims>
+    </config>
+"""
+

@@ -1,0 +1,147 @@
+# Copyright 2014 Tata Consultancy Services Ltd.
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+###############################################################################
+# This module provides the core api to communicate with the execution engine
+###############################################################################
+import os,sys
+cwd=os.getcwd()
+cwd=cwd.split('/')
+sysPath=''
+for dirName in range(1,len(cwd)-1):     #for determining path to root directory
+        sysPath=sysPath+'/'+cwd[dirName]
+
+sys.path.append(sysPath)
+import yaml
+from collections import OrderedDict
+import subprocess
+import paramiko
+from collections import deque
+import threading
+import xmltodict
+import schema
+import report
+from report import report_generator
+
+comm_queue=deque()
+eventNotification = threading.Condition()
+pdf = report_generator.PDFInstance()
+
+#This class incorporates static utility functions
+
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+    class OrderedLoader(Loader):
+        pass
+    def construct_mapping(loader, node):
+        loader.flatten_mapping(node)
+        return object_pairs_hook(loader.construct_pairs(node))
+    OrderedLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+        construct_mapping)
+    return yaml.load(stream, OrderedLoader)
+
+
+def exec_command(command, runner, client=None, **kwargs):
+    """Executes the given command and return the status."""
+    try:
+        if client:
+            stdin, stdout, stderr = client.exec_command(command)
+            output = stdout.read()
+            err = stderr.read()
+            if len(err) > 0:
+                self.logger.debug(err)
+                # sys.exit(0)
+            else:
+                return (output, err)
+        else:
+            process = subprocess.Popen(command.split(),
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE, 
+                                      **kwargs)
+            output, err = process.communicate()
+            if err:
+                logger.debug(err)
+            else:
+                return (output, err)
+    except:
+        logger.warn(
+            "Runner - %d: Unable to execute the given command, Returning as Failed" %
+            runner)
+
+
+def get_ssh_conn(host, username, password, runner):
+    """ Returns an ssh client"""
+    retry = 10
+    try:
+        client = SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(host, 22, username, password)
+        return client
+    except AuthenticationException:
+        logger.error("Runner - %d: Invalid credentials" % runner)
+    except SSHException:
+        logger.error(
+            "Runner - %d: Unable to establish the connection" %
+            runner)
+    except:
+        logger.debug(
+            "Runner - %d: Failed to establis SSH Connectivity" %
+            runner)
+        while (retry > 0):
+            try:
+                client = SSHClient()
+                client.set_missing_host_key_policy(
+                    paramiko.AutoAddPolicy())
+                client.connect(host, 22, username, password)
+                if isinstance(client, SSHClient):
+                    retry = retry - 1
+                    break
+            except:
+                retry = retry - 1
+                logger.debug(
+                    "Runner - %d: Unable to establish connection, Retrying to establish." %
+                    runner)
+        if isinstance(client, SSHClient):
+            return client
+        else:
+            logger.warn(
+                "Runner - %d: Failed to establish connection" %
+                runner)
+
+def loadTrafficGenerator(productPath,testModuleName):
+	"""Load the requested test module"""
+	testModulePath = os.path.join(productPath,'core/tstcore')
+        sys.path.append(testModulePath)
+        #remove the file name at the end and append to sys.path
+        return __import__(testModuleName,globals(), locals(), [], -1)
+
+class Utils(object):
+
+	@staticmethod
+	def helpText():
+		return 'symphony --config-file [ config file path] --script [test script path]'
+		
+	@staticmethod
+	def touch(fname):
+		if os.path.exists(fname):
+			os.utime(fname, None)
+		else:
+			open(fname, 'a').close()
+
+	@staticmethod
+	def loadAvailableTestServices() :
+		"""Fetch available test modules in test Core"""
+		temp = ('tvm','ixia','spirent','sipp')
+		return temp

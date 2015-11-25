@@ -1,0 +1,4 @@
+../../target/ncx/yang_ext.o: yang_ext.c ../platform/procdefs.h def_reg.h \
+ ses.h dlq.h ncxtypes.h xmlns.h status.h tstamp.h ext.h ncxconst.h tk.h \
+ log.h ncx.h grp.h obj.h rpc.h op.h val.h plock_cb.h typ.h xml_util.h \
+ xml_msg.h yang.h ncx_appinfo.h yangconst.h yang_ext.h

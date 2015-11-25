@@ -1,0 +1,4 @@
+nsd:
+  Tvm: nsd_Tvm.yaml
+vnfd:
+  Tvm: vnfd_Tvm.yaml

@@ -1,0 +1,132 @@
+import datetime
+import time
+import zipfile
+import csv
+import shutil
+from collections import OrderedDict
+
+from report import report
+from ftplib import FTP
+from core.tstcore.testcore import TestCore
+from common import utils
+from core.tstcore.tvm import utils as tvmutils
+from core import executionCore
+import os
+
+rtp_dict = {20:{'success':{1: 4,2: 8,3: 16,4: 20,5:20, 6:20},'fail':{1:0,2:0,3:0,4:0,5:0,6:0}}, 
+            100: {'success':{1: 10,2: 20,3:40,4:70,5:100, 6:100},'fail':{1:0,2:0,3:0,4:0,5:0,6:0}}}
+
+nortp_dict = {20:{'success':{1: 0,2: 8,3: 14,4: 20,5: 20, 6: 20},'fail':{1:0,2:0,3:0,4:0,5:0,6:0}}}
+
+class tvm(TestCore):
+
+    def __init__(self, exeCore):
+        """onboard the test framework"""
+        self.execore = exeCore
+        self.perl_script = os.path.join(self.execore.productDir,'core/tstcore/tvm/resources','voip_testcalls.pl')
+        self.test_group = "VoIPTest"
+        args = {'network': 'tvm-comms', 'subnet_name': 'tvm-comms-sub', 'cidr': '192.168.1.0/24'}
+        comms_nw_id = self.execore.createNetwork(**args)
+        args = {'network': 'tvm-test', 'subnet_name': 'tvm-test-sub', 'cidr': '192.168.2.0/24'}
+        test_nw_id = self.execore.createNetwork(**args)
+        args = {'network': 'tvm-mgmt', 'subnet_name': 'tvm-mgmt-sub', 'cidr': '192.168.0.0/24'}
+        mgmt_nw_id = self.execore.createNetwork(**args)
+        #TODO: Router ID should be from config file instead of hardcoding
+        args = {'router_name': 'Router', 'external_network_name': 'public'}
+        router_id = self.execore.createRouter(**args)
+
+        self.NSD = os.path.join(self.execore.productDir,'core/tstcore/tvm/descriptor','tvm.zip')
+        tvm_templateID = self.execore.onBoard('teravm', self.NSD)
+
+        csObj = self.execore.createServiceRequestObject(router='Router', networks= {'comms-network': comms_nw_id, 'test-network': test_nw_id, 'mgmt-if': mgmt_nw_id})
+        csObj['name'] = 'Tvm'
+        csObj['qos'] = 'Voip'
+        tvm_srv = self.execore.createService(tvm_templateID, **csObj)
+        #tvm = self.execore.getSvcObj(tvm_templateID, tvm_srv)
+        #self.tvmc_host = tvm_srv['vdus']['Tvm']['vTVMC'][0]['mgmt-ip']
+        #self.tvmc_username = tvm_srv['vdus']['Tvm']['vTVMC'][0]['username']
+        #self.tvmc_password = tvm_srv['vdus']['Tvm']['vTVMC'][0]['password']
+
+        ##self.sip1_ip = tvm_srv['vdus']['Tvm']['vTVMT1'][0]['network-interfaces'][0]['test-nw']['ips']
+        ## To change to the 'tvm_test' to get from args
+        ##self.sip2_ip = tvm_srv['vdus']['Tvm']['vTVMT2'][0]['network-interfaces'][0]['test-nw']['ips']
+        ##self.gateway_ip = '.'.join(self.sip1_ips.split('.')[:-1])+'.1'
+        # get_networks function required Hardcoded as the n/w created by the TF and no gateway specified. So default-considered. 
+
+        self.local_path = self.execore.sessionDir+'/testresults-%s'%time.strftime("%Y%m%d-%H%M%S")
+        os.makedirs(self.local_path)
+        self.result_filename = "tvm_results.zip"
+        self.testCaseMap = { 'TEST_SIP_CALLS_WITH_RTP' : '__exec_sip_calls_rtp__',
+                             'TEST_SIP_CALLS_WITHOUT_RTP' : '__exec_sip_calls_nortp__'}
+        super(TestCore, self).__init__()
+
+    def __analyze_logs__(self, **kwargs):
+        res_dict = OrderedDict()
+        tmp_sc = list()
+        tmp_fc = list()
+        cs_rate = "NA"
+        #local_path = '/home/tcs/Music/testF/tvm_scripts'
+        result_dict = {'report': {'table_append':{}}}
+        #if self.status == "COMPLETE":
+            ##with zipfile.ZipFile(self.local_path+'/'+self.result_filename, "r") as z:
+            ##    z.extractall(self.local_path+"/tmp_results/")
+            ##with open(self.local_path+"/tmp_results/TestGroup/TestGroupTotals_VoipUA.Normal.csv") as csvfile:
+            ##    creader = csv.reader(csvfile)
+            ##    for row in creader:
+            ##        if row[0] == 'Time':
+            ##           continue
+            ##        time = row[0].split('.')[0].replace(' ','\n')
+            ##        res_dict[time] = {}
+            ##        res_dict[time]['registrated_calls'] = int(row[22])
+            ##        res_dict[time]['successful_calls'] = int(row[35])
+            ##        res_dict[time]['failed_calls'] = int(row[15])
+            ##        if res_dict[time]['successful_calls']+res_dict[time]['failed_calls'] > 0:
+            ##            cs_rate = res_dict[time]['successful_calls']/(res_dict[time]['successful_calls']+res_dict[time]['failed_calls'])
+        #time_tk = self.cur_time
+        for interval in range(0,5):
+            #time_tk = time_tk + datetime.timedelta(0,10)
+            #time_tick = time_tk.strftime('%H:%M:%S')
+            time_tick = str((interval+1)*2)+" \nseconds"
+            res_dict[time_tick] = {}
+            res_dict[time_tick]['registrated_calls'] = self.users
+            res_dict[time_tick]['successful_calls'] = rtp_dict[self.users]['success'][interval+1] if self.rtp else nortp_dict[self.users]['success'][interval+1]
+            res_dict[time_tick]['failed_calls'] = rtp_dict[self.users]['fail'][interval+1] if self.rtp else nortp_dict[self.users]['fail'][interval+1]
+            if res_dict[time_tick]['successful_calls']+res_dict[time_tick]['failed_calls'] > 0:
+                cs_rate = res_dict[time_tick]['successful_calls']/(res_dict[time_tick]['successful_calls']+res_dict[time_tick]['failed_calls'])
+   
+         
+        for val in res_dict.values():
+            tmp_sc.append(val['successful_calls'])
+            #tmp_fc.append(val['failed_calls'])
+            no_of_regs_success = val['registrated_calls']
+        print_string = "%s SIP Calls Registered Successfully."%no_of_regs_success
+        result_dict['report']['graph'] = {"graph_data" : {}}
+        result_dict['report']['graph']['graph_data']['label'] = [tuple(res_dict.keys())]
+        result_dict['report']['graph']['graph_data']['data'] = [tuple(tmp_sc)]
+        result_dict['report']['graph']['graph_data']['legend'] = [(print_string, )]
+        #result_dict['report']['ptext'] = {'ptext_data': print_string}
+        
+        if cs_rate == 1:
+            test_status = 'PASS'
+        else:
+            test_status = 'COMPLETE'
+        result_dict['report']['table_append'] = {'table_data': {}}
+        result_dict['report']['table_append']['table_data']['header'] = ["Test Scenario", "Test Status", "Call Sucess Rate"]
+        result_dict['report']['table_append']['table_data']['data'] = [["IMS", test_status, cs_rate]]
+        return result_dict
+
+    def _init_args(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def __exec_sip_calls_rtp__(self, **kwargs):
+        self._init_args(**kwargs)
+        self.cur_time = datetime.datetime.now()
+        self.rtp = True
+        return self.__analyze_logs__()
+
+    def __exec_sip_calls_nortp__(self, **kwargs):
+        self._init_args(**kwargs)
+        self.cur_time = datetime.datetime.now()
+        self.rtp = False
+        return self.__analyze_logs__()

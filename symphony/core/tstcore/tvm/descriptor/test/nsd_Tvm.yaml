@@ -1,0 +1,70 @@
+nsd:
+  description: 'TVM service'
+  parser: 'yaml'
+  version: 1.0
+  flavours:
+    Voip:
+      flavour-id: Voip
+      description: 'Silver Service flavour'
+      lifecycle-event:
+        scaling:
+          - VDUs:
+              - Tvm:vTVMT1
+            action: scale-out
+            policy: scaleTVMTest
+      monitoring:
+        driver: NetworkIncomingBytes
+      member-vnfs:
+        - name: Tvm
+          member-vdu-id: vLS
+        - name: Tvm
+          member-vdu-id: vTVMC
+          dependency:
+            - Tvm:vLS
+        - name: Tvm
+          member-vdu-id: vTVMT1
+          dependency:
+            - Tvm:vTVMC
+        - name: Tvm
+          member-vdu-id: vTVMT2
+          dependency:
+            - Tvm:vTVMC
+      member-vlds:
+        comms-network:
+          property: internal
+          member-vnfs:
+            Tvm:vTVMC:
+              connection-point: comms-fixed
+            Tvm:vTVMT1:
+              connection-point: comms-network
+            Tvm:vTVMT2:
+              connection-point: comms-network
+        mgmt-if:
+          Router: test-nw-gateway
+          property: internal
+          member-vnfs:
+            Tvm:vLS:
+              connection-point: mgmt-fixed
+            Tvm:vTVMC:
+              connection-point: mgmt-if
+            Tvm:vTVMT1:
+              connection-point: mgmt-if
+            Tvm:vTVMT2:
+              connection-point: mgmt-if
+        test-network:
+          Router: test-nw-gateway
+          property: internal
+          member-vnfs:
+            Tvm:vTVMT1:
+              connection-point: test-network
+            Tvm:vTVMT2:
+              connection-point: test-network
+      forwarding-graphs:
+        WebAccess:
+          direction: bidirection
+          network-forwarding-path:
+            - name: apn-router-gateway
+              type: endpoint
+            - name: Tvm:vTVMC
+              type: vnf
+              connection-point: test-network

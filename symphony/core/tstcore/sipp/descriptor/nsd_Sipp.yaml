@@ -1,0 +1,43 @@
+nsd:
+  name: nsd_template
+  parser: yaml
+  vendor: ETSI
+  description: 'Sipp service'
+  version: 1.0
+  flavours:
+    Voip:
+      flavour-id: Sipp
+      description: 'Silver Service flavour'
+      lifecycle-event:
+        scaling:
+          - VDUs:
+              - Sipp:vSipp
+            action: scale-out
+            policy: scaleSippTest
+      monitoring:
+        driver: NetworkIncomingBytes
+      member-vnfs:
+        - name: Sipp
+          member-vdu-id: vSipp
+      member-vlds:
+        mgmt-if:
+          Router: mgmt-gateway
+          property: internal
+          member-vnfs:
+            Sipp:vSipp:
+              connection-point: mgmt-if
+        sip-network:
+          Router: test-nw-gateway
+          property: internal
+          member-vnfs:
+            Sipp:vSipp:
+              connection-point: sip-network
+      forwarding-graphs:
+        WebAccess:
+          direction: bidirection
+          network-forwarding-path:
+            - name: test-nw-gateway
+              type: endpoint
+            - name: Sipp:vSipp
+              type: vnf
+              connection-point: sip-network

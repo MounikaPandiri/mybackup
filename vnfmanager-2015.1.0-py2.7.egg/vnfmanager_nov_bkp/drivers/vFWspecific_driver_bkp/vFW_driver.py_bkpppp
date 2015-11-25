@@ -1,0 +1,377 @@
+from vnfmanager.agent.linux import utils
+import yaml
+import os
+import re
+import ipaddr
+import time
+import paramiko
+from vnfmanager.drivers import abstract_driver as abs_driver
+
+class NetConf(abs_driver.FWAbstractDriver):
+    def __init__(self, ns_dict):
+        self.masklen = "24"
+        self.ns_config = ns_dict
+        self.src_ip = ""
+        self.dst_ip = ""
+        self.classpath = "/home/openstack/netconf-driver/Netconf.jar:/home/openstack/netconf-driver/NetconfClient.jar"
+        self.addl_env = {}
+        self.addl_env['CLASSPATH'] = self.classpath
+        self.endpoint = {}
+        self.parse()
+        self.pre_configure()
+
+    def parse(self):
+        self.ifaces={}
+        for vnfd in self.ns_config.keys():
+            if vnfd == "firewall":
+                self.vnfd = vnfd
+                self.vnf = str(self.ns_config[vnfd][0]['instance_list'][0])
+                self.mgmt_ip = self.ns_config[vnfd][0]['mgmt-ip'][self.vnf]
+                self.uname = self.ns_config[vnfd][0]['vm_details']['image_details']['username']
+                self.password = self.ns_config[vnfd][0]['vm_details']['image_details']['password']
+ 
+                for iface in self.ns_config[vnfd][0]['vm_details']['network_interfaces'].keys():
+                    if iface != "mgmt-if":
+                        self.ifaces[iface] = self.ns_config[vnfd][0]['vm_details']['network_interfaces'][iface]['ips'][self.vnf]
+ 
+        self.vdu_name = self.vnf.split("-")[0] + ":" + self.vnf.split("-")[1]
+        self.src_ip = self.ns_config['firewall'][0]['vm_details']['network_interfaces']['pkt-in']['ips']['firewall-vfw']
+        self.dst_ip = self.ns_config['firewall'][0]['vm_details']['network_interfaces']['pkt-out']['ips']['firewall-vfw']
+        self.application = 'any'
+        self.action = 'permit'
+        self.policy_name = 'vsrx_rule'
+
+######### added by MOUNIKA #####
+
+    def pre_configure(self):
+        import pdb;pdb.set_trace()
+        self.zone_list = self._get_vsrx_zone_list()
+        self.iface_net_map = self._get_interface_mapping()
+        for iface in self.iface_net_map:
+            zone = self._get_vsrx_interface_zone(iface, self.zone_list)
+            self.iface_net_map[iface]['zone'] = zone
+        
+            
+####ends here ############        
+
+    def _check_connection(self):
+        ssh_connected = False
+        # keep connecting till ssh is success
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        while not ssh_connected:
+            try:
+                ssh.connect(self.mgmt_ip, username = self.uname, password = self.password, allow_agent=False, timeout=10)
+                ssh_connected = True
+                print "VM IS UP"
+            except Exception:
+                print "VM IS DOWN"
+                pass
+
+    #def configure_service(self, *args):
+    def push_configuration(self, instance, mgmt_ip):
+        self._check_connection()
+        self._configure_firewall(self.src_ip, self.dst_ip, self.application, self.action)
+        self._configure_dest_nat()
+        self.application_new = 'tcp'
+        self.action_new = 'deny'
+        self.update_policy(self.src_ip, self.dst_ip, self.application_new, self.action_new)
+
+    def _get_subnet(self, ip_addr):
+        ip=ip_addr.split(".")
+        ip.pop()
+        ip.append('0')
+        return '.'.join(ip)+"/"+ self.masklen
+
+
+    def _configure_dest_nat(self):
+        # Get dst endpoint from forwarding graph ,
+        #   to configure DNAT and SNAT on the packets traversing through firewall and destined to webservers
+
+        nat_commands_list = []
+        match_addr = self.src_ip
+
+        nat_commands_list.append("set security nat destination pool dst-nat-pool-1 address " + self.dst_ip)
+ 
+        if match_addr is not None:
+            match_subnet = self._get_subnet(match_addr)
+            match_addr_mask = ipaddr.IPv4Network(match_subnet)
+            match_network = str(match_addr_mask.network)
+ 
+            match_interface = self._get_vsrx_interface_name(match_network)
+            match_zone = self._get_vsrx_interface_zone(match_interface, self.zone_list)
+           
+            if match_zone is not None:
+                nat_commands_list.append("set security nat destination rule-set rs1 from zone " + match_zone)
+                nat_commands_list.append("set security nat destination rule-set rs1 rule r1 match destination-address " + match_addr)
+                nat_commands_list.append("set security nat destination rule-set rs1 rule r1 then destination-nat pool dst-nat-pool-1")
+ 
+        self.executeCommands(nat_commands_list) 
+
+
+    def _configure_firewall(self, src_ip, dst_ip, application, action):
+        import pdb;pdb.set_trace()
+        policy_commands_list = []
+        src_network=""
+        dst_network=""
+        dst_zone_exists = False
+        src_zone_exists = False
+        firewall_action = action
+ 
+        # Get forwarding policies to be configured from forwarding graph
+        # Get corresponding interfaces and ips from vdu_details in vnfm yaml file
+        # Get the subnet configuration (masklen also)
+        self.policy_dict = dict()
+ 
+ 
+        dst_subnet = self._get_subnet(self.dst_ip)
+        src_subnet = self._get_subnet(self.src_ip)
+ 
+        if dst_subnet is not None:
+            dst_addr_mask = ipaddr.IPv4Network(dst_subnet)
+            dst_network = str(dst_addr_mask.network)
+            dst_addr = dst_network + "/" + str(dst_addr_mask.netmask)
+ 
+        if src_subnet is not None:
+            src_addr_mask = ipaddr.IPv4Network(src_subnet)
+            src_network = str(src_addr_mask.network)
+            src_addr = src_network + "/" + str(src_addr_mask.netmask)
+ 
+        dst_interface = self._get_vsrx_interface_name(dst_network)
+        src_interface = self._get_vsrx_interface_name(src_network)
+ 
+        dst_zone_name = self._get_vsrx_interface_zone(dst_interface, self.zone_list)
+        src_zone_name = self._get_vsrx_interface_zone(src_interface, self.zone_list)
+ 
+        if dst_zone_name is not None:
+            policy_commands_list.append("set security address-book dst-book attach zone " + dst_zone_name)
+            dst_zone_exists = True
+ 
+        if src_zone_name is not None:
+            policy_commands_list.append("set security address-book src-book attach zone " + src_zone_name)
+            src_zone_exists = True
+ 
+        if dst_zone_exists and src_zone_exists:
+ 
+            fr_name = src_zone_name + "_" + dst_zone_name
+            fr_rev_name = dst_zone_name + "_" + src_zone_name
+        
+            self.policy_dict[fr_name] = dict()
+ 
+            policy_commands_list.append("set security policies from-zone " + src_zone_name + " to-zone " + dst_zone_name + " policy " + fr_name + " then " + firewall_action)
+ 
+            policy_commands_list.append("set security policies from-zone " + dst_zone_name + " to-zone " + src_zone_name + " policy " + fr_rev_name + " then " + firewall_action)
+
+            if src_addr is not None:
+                src_addr_str = "src_addr"
+                src_addr_cmd = "set security address-book src-book address " + src_addr_str + " wildcard-address " + src_addr
+                policy_commands_list.append(src_addr_cmd)
+ 
+            if dst_addr is not None:
+                dst_addr_str = "dst_addr"
+                dst_addr_cmd = "set security address-book dst-book address " + dst_addr_str + " wildcard-address " + dst_addr
+                policy_commands_list.append(dst_addr_cmd)
+ 
+            # build the firewall policy commands
+            policy_commands_list.append("set security policies from-zone "+ src_zone_name + " to-zone " + dst_zone_name + " policy " + fr_name + " match source-address " + src_addr_str + " destination-address " + dst_addr_str + " application " + application)
+ 
+            policy_commands_list.append("set security policies from-zone " + dst_zone_name + " to-zone " + src_zone_name + " policy " + fr_rev_name + " match source-address " + dst_addr_str + " destination-address " + src_addr_str + " application " + application)
+
+            self.policy_dict[fr_name]['src_zone'] = src_zone_name
+            self.policy_dict[fr_name]['dst_zone'] = dst_zone_name
+            self.policy_dict[fr_name]['src_addr'] = src_ip
+            self.policy_dict[fr_name]['dst_addr'] = dst_ip
+            self.policy_dict[fr_name]['application'] = application
+            self.policy_dict[fr_name]['action'] = firewall_action
+ 
+            self.executeCommands(policy_commands_list)
+        return ""
+
+    def executeCommands(self, commands_list):
+        os.putenv("CLASSPATH", self.classpath);
+        executionList=['java', 'RunConfigurationCommand']
+        executionList.extend([self.mgmt_ip, self.uname, self.password])
+ 
+        for command in commands_list:
+            executionList.append(command);
+ 
+        execute=False
+        while not execute:
+            try:
+                retVal = utils.execute(executionList, addl_env=self.addl_env)
+                execute=True
+            except Exception:
+                pass
+        return retVal
+
+### added by Mounika to get mapping for inerfaces and network,ips ###
+
+    def _get_interface_mapping(self):
+        os.putenv("CLASSPATH", self.classpath);
+        executionList=['java', 'RunCliCommand']
+        executionList.extend([self.mgmt_ip, self.uname, self.password])
+        executionList.extend(["show route terse"])
+        command_exec_success = False
+        while not command_exec_success:
+            interfaces_dict = dict()
+            try:
+                row_list=[]
+                retVal=""
+                retVal = utils.execute(executionList, addl_env=self.addl_env)
+                for line in retVal.splitlines(retVal.count('\n')):
+                    row_list.append(line)
+                for i in range(len(row_list)):
+                    iface_dict = dict()
+                    if row_list[i] != '\n':
+                       row_split = row_list[i].split(" ")
+                       if row_split[-4].find('ge') >=0:
+                          iface_dict['network'] = row_split[1]
+                          new_row = row_list[i+1]
+                          new_row_split = new_row.split(" ")
+                          iface_dict['ip'] = new_row_split[1]
+                          interfaces_dict[row_split[-4][1:]] = iface_dict
+                command_exec_success = True 
+            except Exception as e:
+                pass  
+        return interfaces_dict
+
+### Ends Here ##############
+
+    def _get_vsrx_zone_list(self):
+        os.putenv("CLASSPATH", self.classpath);
+        executionList=['java', 'RunConfigurationCommand']
+        executionList.extend([self.mgmt_ip, self.uname, self.password])
+        command_exec_success = False
+ 
+        zone_list=[]
+ 
+        while not command_exec_success:
+            try:
+                op_list=[]
+                executionList.extend(["show security zones"])
+                retVal=""
+                retVal = utils.execute(executionList, addl_env=self.addl_env)
+                for line in retVal.splitlines(retVal.count('\n')):
+                     if re.search("security-zone", line):
+                         line = line.rstrip()
+                         op_list=re.split(" ", line)
+                         zone=op_list[len(op_list)-2]
+                         zone_list.extend([zone])
+                command_exec_success = True
+                return zone_list
+            except Exception:
+                pass
+        return ""
+
+    def _get_vsrx_interface_zone(self, interface, zone_list):
+        os.putenv("CLASSPATH", self.classpath);
+        executionList=['java', 'RunConfigurationCommand']
+        executionList.extend([self.mgmt_ip, self.uname, self.password])
+        command_exec_success = False
+        ### Modified by Mounika ### 
+        for zone in zone_list:
+            command_exec_success = False
+            cmd = "show security zones security-zone " + zone
+            executionList.extend([cmd])
+            while not command_exec_success:
+                try:
+                    op_list=[]
+                    retVal=""
+                    retVal = utils.execute(executionList, addl_env=self.addl_env)
+                    for line in retVal.splitlines(retVal.count('\n')):
+                        if re.search(interface, line):
+                            return zone
+                    command_exec_success = True
+                except Exception:
+                    pass
+            del executionList[len(executionList)-1]
+        return ""
+
+####added By Mounika##
+    def _get_zone_for_ip(self,addr):
+        for iface in self.iface_net_map:
+            if self.iface_net_map[iface]['ip'].split('/')[0] == addr:
+               zone = self.iface_net_map[iface]['zone']
+        return zone
+               
+    def _get_vsrx_interface_name(self,network):
+       for iface in self.iface_net_map:
+           if self.iface_net_map[iface]['network'].split('/')[0] == network:
+              return iface
+
+    def get_vsrx_application(self, protocol):
+
+        if protocol=="icmp":
+            return "junos-icmp-all"
+        elif protocol == "tcp":
+            return "junos-tcp-any"
+        elif protocol == "any":
+            return "any"
+
+    def update_policy(self, args_dict):
+        src_ip = args_dict['src_addr']
+        dst_ip = args_dict['dst_addr']
+        application = args_dict['application']
+        action = args_dict['action']
+        policy_name = args_dict['name']
+        import pdb;pdb.set_trace()
+        policy_commands_list = []
+        src_addr_str = "src_addr"
+        dst_addr_str = "dst_addr"
+        application = self.get_vsrx_application(application)
+
+        for policy in self.policy_dict:
+            import pdb;pdb.set_trace()
+            if self.policy_dict[policy]['src_addr'] == src_ip and self.policy_dict[policy]['dst_addr'] == dst_ip:
+               if self.policy_dict[policy]['application'] == application and self.policy_dict[policy]['action'] == action:
+                  LOG.debug(_("policy already present"))
+               else:
+                  src_zone_name = self._get_zone_for_ip(src_ip)
+                  dst_zone_name = self._get_zone_for_ip(dst_ip)
+                  fr_name = src_zone_name + "_" + dst_zone_name
+                  fr_rev_name = dst_zone_name + "_" + src_zone_name
+
+                  policy_commands_list.append("delete security policies from-zone " + src_zone_name+ " to-zone " + \
+                                dst_zone_name + " policy " + fr_name)
+
+                  policy_commands_list.append("delete security policies from-zone " + dst_zone_name + " to-zone " + \
+                                    src_zone_name + " policy " + fr_rev_name)
+
+                  policy_commands_list.append("set security policies from-zone " + src_zone_name + \
+                                              " to-zone " + dst_zone_name + \
+                                              " policy " + fr_name + " then " + action)
+                 
+                  policy_commands_list.append("set security policies from-zone " + dst_zone_name + \
+                                              " to-zone " + src_zone_name + \
+                                              " policy " + fr_rev_name + " then " + action)
+ 
+                  policy_commands_list.append("set security policies from-zone "+ src_zone_name + \
+                                              " to-zone " + dst_zone_name + \
+                                              " policy " + fr_name + \
+                                              " match source-address " + src_addr_str + " destination-address " + \
+                                              dst_addr_str + " application " + application)
+
+                  policy_commands_list.append("set security policies from-zone " + dst_zone_name + \
+                                              " to-zone " + src_zone_name + \
+                                              " policy " + fr_rev_name + \
+                                              " match source-address " + dst_addr_str+ " destination-address " + \
+                                              src_addr_str +" application " + application)
+                  self.executeCommands(policy_commands_list)
+
+            else:
+               self.configure_firewall(src_ip, dst_ip, application, action)
+
+    def update_rule(self, **kwargs):
+        """Update the Firewall Rule."""
+        pass
+                  
+    def update_zone(self, **kwargs):
+        """Update the Firewall Zone."""
+        pass
+
+    def update_nat(self, **kwargs):
+        """Update the Nat."""
+        pass
+
+## ends here ##

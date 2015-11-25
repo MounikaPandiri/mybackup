@@ -1,0 +1,15 @@
+Package: yuma-dev
+Source: yuma
+Version: 2.2-5
+Architecture: all
+Maintainer: Andy Bierman <andy@yumaworks.com>
+Installed-Size: 38
+Depends: yuma
+Section: devel
+Priority: extra
+Homepage: http://www.yumaworks.com/
+Description: YANG-based Unified Modular Automation tools (dev)
+ Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+ development toolkit.  This package contains H files, scripts,
+ and other files needed to create SIL code for use with
+ the netconfd server.

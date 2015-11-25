@@ -1,0 +1,4 @@
+nsd:
+  Sipp: nsd_Sipp.yaml
+vnfd:
+  Sipp: vnfd_Sipp.yaml

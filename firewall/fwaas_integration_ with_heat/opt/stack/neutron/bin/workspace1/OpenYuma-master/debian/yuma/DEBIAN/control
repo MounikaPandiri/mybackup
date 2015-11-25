@@ -1,0 +1,15 @@
+Package: yuma
+Version: 2.2-5
+Architecture: amd64
+Maintainer: Andy Bierman <andy@yumaworks.com>
+Installed-Size: 3680
+Depends: libncurses5, libssh2-1 (>= 1.1), libxml2 (>= 2.7.4), libc6 (>= 2.15), libtinfo5
+Section: devel
+Priority: extra
+Homepage: http://www.yumaworks.com/
+Description: YANG-based Unified Modular Automation tools
+ Yuma Tools is a YANG-based NETCONF-over-SSH client and server
+ development toolkit.  The netconfd server includes an automated
+ central NETCONF protocol stack, based directly on YANG modules.
+ The yangdump and yangdiff development tools are also
+ included, to compile and process YANG modules.

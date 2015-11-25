@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<vsrxfirewall>
+         <image-id>6a5f3a82-ca1b-48d8-b85c-f09fb90a33e0</image-id>
+         <name>_firewall_instance</name>
+         <flavor-id>1</flavor-id>
+	 <net-name>mgnt_network</net-name>
+	 <subnet-name>mgnt_network_subnet</subnet-name>
+	 <subnet-cidr>192.168.3.0/24</subnet-cidr>
+</vsrxfirewall>
+
+
+
+

@@ -1,0 +1,69 @@
+heat_template_version: 2013-05-23
+
+description: A template which creates two networks,vms and a high security service vm
+
+parameters:
+    snet:
+        type: string
+        description : Source Subnet
+    dnet:
+        type: string
+        description : Destination Subnet
+        
+resources:       
+    instance1-network:
+        type: OS::Neutron::Net
+        properties: {name: vyatta_heat_snet}
+    instance1-subnet:
+        type: OS::Neutron::Subnet
+        properties:
+            name : vyatta_heat_snet_subnet
+            network_id: {Ref: instance1-network}
+            cidr: { get_param: snet }
+            ip_version: 4
+    instance2-network:
+        type: OS::Neutron::Net
+        properties: {name: vyatta_heat_dnet}
+    instance2-subnet:
+        type: OS::Neutron::Subnet
+        properties:
+            name : vyatta_heat_dnet_subnet
+            network_id: {Ref: instance2-network}
+            cidr: { get_param: dnet }
+            ip_version: 4    
+    instance1:
+        type: OS::Nova::Server
+        properties:
+            name : private-vm
+            image: b868bc4a-033f-413f-9544-a83498a288e1
+            flavor: m1.nano
+            networks: [{"network":{Ref: instance1-network}}]
+    instance2:
+        type: OS::Nova::Server
+        properties:
+            name : public-vm
+            image: b868bc4a-033f-413f-9544-a83498a288e1
+            flavor: m1.nano
+            networks: [{"network":{Ref: instance2-network}}]
+    securityhigh:
+        type: OS::Neutron::SecurityHigh
+        properties:
+            name: vyatta
+            sprop1: not_required
+            sprop2: not_required
+            sprop3: required
+            sprop4: not_required
+            source_ip_address: {get_attr: [instance1-subnet, cidr]}
+            destination_ip_address: { get_attr: [instance2-subnet, cidr]}
+
+outputs:
+    instance1_ip:
+        description: IP address of instance1
+        value: { get_attr: [instance1, first_address]}
+    instance2_ip:
+        description: IP address of instance2
+        value: { get_attr: [instance2, first_address]}
+
+
+
+
